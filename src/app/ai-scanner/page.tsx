@@ -331,9 +331,11 @@ export default function AiScannerPage() {
                   <h4 className="font-extrabold text-sm text-foreground">
                     {result.recommendedService}
                   </h4>
-                  <Link href={`/services`}>
+                  <Link
+                    href={`/services?category=${encodeURIComponent(result.recommendedCategory || "Semua")}&serviceTitle=${encodeURIComponent(result.recommendedService)}&damageTitle=${encodeURIComponent(result.damageTitle)}&fromAi=true`}
+                  >
                     <Button size="sm" className="w-full font-bold text-xs gap-1.5 shadow-md shadow-orange-500/20">
-                      <span>Pesan Tukang Ini Sekarang</span>
+                      <span>Pesan Tukang Spesialis Ini Sekarang</span>
                       <ArrowRight className="h-3.5 w-3.5" />
                     </Button>
                   </Link>

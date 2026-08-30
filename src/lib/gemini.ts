@@ -11,6 +11,7 @@ export interface DamageAnalysisResult {
   severity: "Ringan" | "Sedang" | "Parah";
   estimatedMinPrice: number;
   estimatedMaxPrice: number;
+  recommendedCategory: string; // e.g. "Elektronik & AC", "Plumbing & Sanitari", "Cat & Dinding", "Atap & Kanopi", "Lantai & Dinding"
   recommendedService: string;
   recommendedServicePrice: number;
   recommendedMaterials: {
@@ -44,7 +45,8 @@ Format JSON yang wajib Anda kembalikan:
   "severity": "Ringan" | "Sedang" | "Parah",
   "estimatedMinPrice": (angka estimasi biaya terendah dalam Rupiah, misal: 85000),
   "estimatedMaxPrice": (angka estimasi biaya tertinggi dalam Rupiah, misal: 250000),
-  "recommendedService": "Nama kategori jasa tukang KLIKO yang cocok (misal: Instalasi Plumbing & Pipa Air Bersih/Kotor)",
+  "recommendedCategory": "Pilih persis salah satu kategori berikut: 'Elektronik & AC' | 'Plumbing & Sanitari' | 'Cat & Dinding' | 'Atap & Kanopi' | 'Lantai & Dinding' | 'Kelistrikan'",
+  "recommendedService": "Nama kategori jasa tukang KLIKO yang cocok (misal: Service, Cuci & Reparasi AC Menetes / Tidak Dingin)",
   "recommendedServicePrice": (angka tarif dasar jasa tukang dalam Rupiah, misal: 85000),
   "recommendedMaterials": [
     {
@@ -78,27 +80,55 @@ Format JSON yang wajib Anda kembalikan:
       .replace(/```\s*$/, "")
       .trim();
 
-    return JSON.parse(cleanedJson) as DamageAnalysisResult;
+    const parsed = JSON.parse(cleanedJson);
+    if (!parsed.recommendedCategory) {
+      parsed.recommendedCategory = mapToKlikoCategory(parsed.itemName + " " + parsed.damageTitle + " " + (userNotes || ""));
+    }
+
+    return parsed as DamageAnalysisResult;
   } catch (error) {
     console.error("Gemini AI API Error, using intelligent fallback analysis:", error);
-    // Return structured realistic fallback diagnosis if image is preset or API limit reached
     return getFallbackDamageAnalysis(userNotes);
   }
+}
+
+export function mapToKlikoCategory(text: string): string {
+  const lower = text.toLowerCase();
+  if (lower.includes("ac") || lower.includes("dingin") || lower.includes("hvac") || lower.includes("freon")) {
+    return "Elektronik & AC";
+  }
+  if (lower.includes("plumbing") || lower.includes("pipa") || lower.includes("wastafel") || lower.includes("kran") || lower.includes("wc") || lower.includes("toilet") || lower.includes("toren")) {
+    return "Plumbing & Sanitari";
+  }
+  if (lower.includes("cat") || lower.includes("dinding") || lower.includes("plamir") || lower.includes("tembok")) {
+    return "Cat & Dinding";
+  }
+  if (lower.includes("atap") || lower.includes("genteng") || lower.includes("kanopi") || lower.includes("talang") || lower.includes("baja ringan")) {
+    return "Atap & Kanopi";
+  }
+  if (lower.includes("keramik") || lower.includes("granit") || lower.includes("lantai") || lower.includes("ubin")) {
+    return "Lantai & Dinding";
+  }
+  if (lower.includes("listrik") || lower.includes("lampu") || lower.includes("mcb") || lower.includes("saklar")) {
+    return "Kelistrikan";
+  }
+  return "Semua";
 }
 
 export function getFallbackDamageAnalysis(notes?: string): DamageAnalysisResult {
   const lower = (notes || "").toLowerCase();
   
-  if (lower.includes("ac") || lower.includes("dingin") || lower.includes("bocor")) {
+  if (lower.includes("ac") || lower.includes("dingin") || lower.includes("bocor") && lower.includes("ac")) {
     return {
       itemName: "Unit Indoor AC Split (1 PK)",
       damageTitle: "Talang Pembuangan Air AC Tersumbat & Freon Berkurang",
       damageDescription: "Air menetes dari unit indoor akibat saluran pembuangan kondensasi tersumbat lumut dan filter udara kotor, menyebabkan pendinginan tidak optimal.",
       severity: "Sedang",
-      estimatedMinPrice: 150000,
-      estimatedMaxPrice: 280000,
-      recommendedService: "Service & Cuci AC + Tambah Freon",
-      recommendedServicePrice: 150000,
+      estimatedMinPrice: 85000,
+      estimatedMaxPrice: 220000,
+      recommendedCategory: "Elektronik & AC",
+      recommendedService: "Service, Cuci & Reparasi AC Menetes / Tidak Dingin",
+      recommendedServicePrice: 85000,
       recommendedMaterials: [
         {
           name: "Selang Pembuangan Fleksibel AC 2 Meter",
@@ -128,8 +158,9 @@ export function getFallbackDamageAnalysis(notes?: string): DamageAnalysisResult 
       severity: "Ringan",
       estimatedMinPrice: 120000,
       estimatedMaxPrice: 350000,
-      recommendedService: "Pengecatan Dinding & Perbaikan Plamir Anti-Rembes",
-      recommendedServicePrice: 120000,
+      recommendedCategory: "Cat & Dinding",
+      recommendedService: "Pengecatan Dinding Rumah Interior & Eksterior",
+      recommendedServicePrice: 22000,
       recommendedMaterials: [
         {
           name: "Plamir Mortar Semen Instan Anti-Retak (Surplus Sak)",
@@ -151,6 +182,33 @@ export function getFallbackDamageAnalysis(notes?: string): DamageAnalysisResult 
     };
   }
 
+  if (lower.includes("atap") || lower.includes("genteng") || lower.includes("talang")) {
+    return {
+      itemName: "Atap Genteng & Talang Rumah",
+      damageTitle: "Kebocoran Titik Sambungan Talang & Genteng Bergeser",
+      damageDescription: "Sambungan talang air seng mengalami korosi dan posisi beberapa genteng tanah liat bergeser akibat terpaan angin kencang sehingga air merembes ke plafon.",
+      severity: "Sedang",
+      estimatedMinPrice: 175000,
+      estimatedMaxPrice: 380000,
+      recommendedCategory: "Atap & Kanopi",
+      recommendedService: "Perbaikan Atap Genteng Bocor & Talang Air",
+      recommendedServicePrice: 175000,
+      recommendedMaterials: [
+        {
+          name: "Waterproofing Fiber Serat No Drop 1kg",
+          estimatedPrice: 65000,
+          isCircular: true,
+        },
+      ],
+      urgencyAdvice: "Tandai area plafon yang basah dengan pensil dan letakkan ember penampung air di bawahnya.",
+      suggestedSteps: [
+        "Pengembalian posisi genteng presisi",
+        "Pelapisan serat fiber waterproofing 3 lapis",
+        "Uji siram air untuk memastikan bebas bocor",
+      ],
+    };
+  }
+
   // Default Wastafel / Plumbing
   return {
     itemName: "Wastafel Cuci Piring / Kamar Mandi",
@@ -159,7 +217,8 @@ export function getFallbackDamageAnalysis(notes?: string): DamageAnalysisResult 
     severity: "Sedang",
     estimatedMinPrice: 85000,
     estimatedMaxPrice: 195000,
-    recommendedService: "Instalasi Plumbing & Reparasi Pipa Bocor",
+    recommendedCategory: "Plumbing & Sanitari",
+    recommendedService: "Instalasi Plumbing & Pipa Air Bersih/Kotor",
     recommendedServicePrice: 85000,
     recommendedMaterials: [
       {

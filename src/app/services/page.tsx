@@ -25,6 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { MOCK_SERVICES, MOCK_TUKANGS, MockService } from "@/lib/mock-data";
 import { formatRupiah } from "@/lib/utils";
+import { MidtransPaymentModal } from "@/components/payment/MidtransPaymentModal";
 
 function ServicesContent() {
   const searchParams = useSearchParams();
@@ -44,6 +45,7 @@ function ServicesContent() {
   const [bookingDate, setBookingDate] = React.useState<string>("2026-09-01");
   const [bookingAddress, setBookingAddress] = React.useState<string>("Jl. Kemang Raya No. 24, Jakarta Selatan");
   const [bookingSuccess, setBookingSuccess] = React.useState<boolean>(false);
+  const [paymentModalOpen, setPaymentModalOpen] = React.useState<boolean>(false);
   const [isAiFiltered, setIsAiFiltered] = React.useState<boolean>(fromAiParam);
 
   React.useEffect(() => {
@@ -494,8 +496,8 @@ function ServicesContent() {
                 <Button variant="outline" onClick={() => setBookingService(null)}>
                   Batal
                 </Button>
-                <Button onClick={handleConfirmBooking} className="font-bold gap-1.5">
-                  <span>Konfirmasi & Booking</span>
+                <Button onClick={() => setPaymentModalOpen(true)} className="font-bold gap-1.5 bg-linear-to-r from-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/20">
+                  <span>Bayar via Midtrans ({formatRupiah(calculateTotal())})</span>
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </DialogFooter>
@@ -503,6 +505,29 @@ function ServicesContent() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Midtrans Payment Gateway Modal */}
+      {bookingService && (
+        <MidtransPaymentModal
+          isOpen={paymentModalOpen}
+          onClose={() => setPaymentModalOpen(false)}
+          title={`Jasa: ${bookingService.title}`}
+          grossAmount={calculateTotal()}
+          customerName="Bpk. Aditya Pratama"
+          items={[
+            {
+              id: bookingService.id,
+              name: bookingService.title,
+              price: bookingService.basePrice,
+              quantity: bookingQty,
+            },
+          ]}
+          onSuccess={(orderId) => {
+            setPaymentModalOpen(false);
+            setBookingSuccess(true);
+          }}
+        />
+      )}
     </div>
   );
 }

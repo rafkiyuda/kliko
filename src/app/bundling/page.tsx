@@ -19,12 +19,14 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { MOCK_BUNDLINGS, MockBundling } from "@/lib/mock-data";
 import { formatRupiah } from "@/lib/utils";
+import { MidtransPaymentModal } from "@/components/payment/MidtransPaymentModal";
 
 export default function BundlingPage() {
   const [selectedBundle, setSelectedBundle] = React.useState<MockBundling | null>(null);
   const [bookingAddress, setBookingAddress] = React.useState<string>("Jl. Wijaya Timur II No. 18, Kebayoran Baru");
   const [bookingDate, setBookingDate] = React.useState<string>("2026-09-03");
   const [orderSuccess, setOrderSuccess] = React.useState<boolean>(false);
+  const [paymentModalOpen, setPaymentModalOpen] = React.useState<boolean>(false);
 
   const handleOpenBundle = (bundle: MockBundling) => {
     setSelectedBundle(bundle);
@@ -274,8 +276,8 @@ export default function BundlingPage() {
                 <Button variant="outline" onClick={() => setSelectedBundle(null)}>
                   Batal
                 </Button>
-                <Button onClick={() => setOrderSuccess(true)} className="font-bold gap-1.5">
-                  <span>Pesan Sekarang</span>
+                <Button onClick={() => setPaymentModalOpen(true)} className="font-bold gap-1.5 bg-linear-to-r from-orange-500 via-amber-500 to-orange-600 text-white shadow-md shadow-orange-500/25">
+                  <span>Bayar via Midtrans ({formatRupiah(selectedBundle?.bundlingPrice || 0)})</span>
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </DialogFooter>
@@ -283,6 +285,29 @@ export default function BundlingPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Midtrans Payment Modal for Bundling */}
+      {selectedBundle && (
+        <MidtransPaymentModal
+          isOpen={paymentModalOpen}
+          onClose={() => setPaymentModalOpen(false)}
+          title={`Paket Bundling: ${selectedBundle.title}`}
+          grossAmount={selectedBundle.bundlingPrice}
+          customerName="Bpk. Aditya Pratama"
+          items={[
+            {
+              id: selectedBundle.id,
+              name: selectedBundle.title,
+              price: selectedBundle.bundlingPrice,
+              quantity: 1,
+            },
+          ]}
+          onSuccess={(orderId) => {
+            setPaymentModalOpen(false);
+            setOrderSuccess(true);
+          }}
+        />
+      )}
     </div>
   );
 }

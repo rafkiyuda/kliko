@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
 import { 
   Hammer, 
@@ -15,8 +16,11 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { MidtransPaymentModal } from "@/components/payment/MidtransPaymentModal";
 
 export function Hero() {
+  const [heroPaymentModal, setHeroPaymentModal] = React.useState(false);
+  const [orderSuccess, setOrderSuccess] = React.useState(false);
   return (
     <section className="relative overflow-hidden pt-8 pb-16 md:pt-16 md:pb-24">
       {/* Background Gradients & Glow */}
@@ -190,11 +194,12 @@ export function Hero() {
                 </div>
 
                 <div className="pt-2">
-                  <Link href="/bundling">
-                    <Button className="w-full justify-center text-xs h-9 font-bold">
-                      Ambil Penawaran Paket Ini
-                    </Button>
-                  </Link>
+                  <Button
+                    onClick={() => setHeroPaymentModal(true)}
+                    className="w-full justify-center text-xs h-9 font-bold bg-linear-to-r from-orange-500 to-amber-500 text-white shadow-xs"
+                  >
+                    Ambil Penawaran Paket Ini
+                  </Button>
                 </div>
               </div>
 
@@ -219,6 +224,27 @@ export function Hero() {
           </div>
         </div>
       </div>
+
+      {/* Midtrans Payment Modal for Hero Card */}
+      <MidtransPaymentModal
+        isOpen={heroPaymentModal}
+        onClose={() => setHeroPaymentModal(false)}
+        title="Paket Bundling Kanopi & Atap Spandek (15 m²)"
+        grossAmount={2850000}
+        customerName="Bpk. Aditya Pratama"
+        items={[
+          {
+            id: "bnd-hero-1",
+            name: "Paket Bundling Kanopi Baja Ringan & Atap Spandek",
+            price: 2850000,
+            quantity: 1,
+          },
+        ]}
+        onSuccess={(orderId) => {
+          setHeroPaymentModal(false);
+          setOrderSuccess(true);
+        }}
+      />
     </section>
   );
 }

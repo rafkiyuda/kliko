@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/context/AuthContext";
@@ -41,6 +42,12 @@ export default function RootLayout({
             <Footer />
           </AuthProvider>
         </ThemeProvider>
+        {/* Midtrans Snap Sandbox JS */}
+        <Script
+          src="https://app.sandbox.midtrans.com/snap/snap.js"
+          data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || "SB-Mid-client-kliko-sandbox-key"}
+          strategy="lazyOnload"
+        />
       </body>
     </html>
   );

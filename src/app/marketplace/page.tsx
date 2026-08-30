@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { MOCK_MATERIALS, MockMaterial } from "@/lib/mock-data";
 import { formatRupiah } from "@/lib/utils";
+import { MidtransPaymentModal } from "@/components/payment/MidtransPaymentModal";
 
 export default function MarketplacePage() {
   const [selectedCategory, setSelectedCategory] = React.useState<string>("Semua");
@@ -29,6 +30,7 @@ export default function MarketplacePage() {
   const [selectedMaterial, setSelectedMaterial] = React.useState<MockMaterial | null>(null);
   const [orderQty, setOrderQty] = React.useState<number>(1);
   const [orderSuccess, setOrderSuccess] = React.useState<boolean>(false);
+  const [paymentModalOpen, setPaymentModalOpen] = React.useState<boolean>(false);
 
   const categories = [
     "Semua",
@@ -366,8 +368,8 @@ export default function MarketplacePage() {
                 <Button variant="outline" onClick={() => setSelectedMaterial(null)}>
                   Batal
                 </Button>
-                <Button onClick={() => setOrderSuccess(true)} variant="eco" className="font-bold gap-1.5">
-                  <span>Checkout Material</span>
+                <Button onClick={() => setPaymentModalOpen(true)} variant="eco" className="font-bold gap-1.5 shadow-md shadow-emerald-500/20">
+                  <span>Bayar via Midtrans ({formatRupiah(calculateTotal())})</span>
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </DialogFooter>
@@ -375,6 +377,29 @@ export default function MarketplacePage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Midtrans Payment Modal for Marketplace */}
+      {selectedMaterial && (
+        <MidtransPaymentModal
+          isOpen={paymentModalOpen}
+          onClose={() => setPaymentModalOpen(false)}
+          title={`Material: ${selectedMaterial.title}`}
+          grossAmount={calculateTotal()}
+          customerName="Bpk. Aditya Pratama"
+          items={[
+            {
+              id: selectedMaterial.id,
+              name: selectedMaterial.title,
+              price: selectedMaterial.discountedPrice,
+              quantity: orderQty,
+            },
+          ]}
+          onSuccess={(orderId) => {
+            setPaymentModalOpen(false);
+            setOrderSuccess(true);
+          }}
+        />
+      )}
     </div>
   );
 }

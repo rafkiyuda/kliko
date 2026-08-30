@@ -1,0 +1,230 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* KLIKO Brand Identity - Light Mode (Extracted from Official Logo #082040 & #F88000) */
+  --kliko-orange: #f88000;
+  --kliko-orange-dark: #e06c00;
+  --kliko-orange-light: #fff3e6;
+
+  --kliko-navy: #082040;
+  --kliko-navy-light: #0f325e;
+
+  --kliko-emerald: #10b981;
+  --kliko-emerald-dark: #059669;
+  --kliko-emerald-light: #d1fae5;
+
+  --kliko-amber: #f59e0b;
+  --kliko-amber-light: #fef3c7;
+
+  --primary: #f88000;
+  --primary-foreground: #ffffff;
+
+  --secondary: #10b981;
+  --secondary-foreground: #ffffff;
+
+  --accent: #f59e0b;
+  --accent-foreground: #082040;
+
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+
+  --muted: #f1f5f9;
+  --muted-foreground: #475569;
+
+  --card: #ffffff;
+  --card-foreground: #082040;
+
+  --popover: #ffffff;
+  --popover-foreground: #082040;
+
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #f88000;
+
+  --radius: 0.75rem;
+
+  --background: #fbfdfe;
+  --foreground: #082040;
+
+  /* Charts */
+  --chart-1: #f88000;
+  --chart-2: #10b981;
+  --chart-3: #f59e0b;
+  --chart-4: #082040;
+  --chart-5: #6366f1;
+
+  --sidebar: #ffffff;
+  --sidebar-foreground: #082040;
+  --sidebar-primary: #f88000;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f8fafc;
+  --sidebar-accent-foreground: #082040;
+  --sidebar-border: #e2e8f0;
+  --sidebar-ring: #f88000;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
+  --font-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: var(--font-geist-mono), monospace;
+  
+  --color-kliko-orange: var(--kliko-orange);
+  --color-kliko-orange-dark: var(--kliko-orange-dark);
+  --color-kliko-orange-light: var(--kliko-orange-light);
+
+  --color-kliko-navy: var(--kliko-navy);
+  --color-kliko-navy-light: var(--kliko-navy-light);
+
+  --color-kliko-emerald: var(--kliko-emerald);
+  --color-kliko-emerald-dark: var(--kliko-emerald-dark);
+  --color-kliko-emerald-light: var(--kliko-emerald-light);
+
+  --color-kliko-amber: var(--kliko-amber);
+  --color-kliko-amber-light: var(--kliko-amber-light);
+}
+
+/* Dark Mode Override - Rich Midnight Steel & Navy */
+.dark {
+  --background: #06152b;
+  --foreground: #f0f6fc;
+
+  --primary: #f88000;
+  --primary-foreground: #ffffff;
+
+  --secondary: #10b981;
+  --secondary-foreground: #ffffff;
+
+  --accent: #f59e0b;
+  --accent-foreground: #06152b;
+
+  --muted: #0d2342;
+  --muted-foreground: #94a3b8;
+
+  --card: #0a1f3a;
+  --card-foreground: #f0f6fc;
+
+  --popover: #0a1f3a;
+  --popover-foreground: #f0f6fc;
+
+  --border: #163660;
+  --input: #163660;
+  --ring: #f88000;
+
+  --destructive: #ef4444;
+
+  --sidebar: #0a1f3a;
+  --sidebar-foreground: #f0f6fc;
+  --sidebar-primary: #f88000;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #0d2342;
+  --sidebar-accent-foreground: #f0f6fc;
+  --sidebar-border: #163660;
+  --sidebar-ring: #f88000;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Glassmorphism Design Utilities */
+.glass {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+}
+
+.dark .glass {
+  background: rgba(10, 31, 58, 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 10px 25px -5px rgba(8, 32, 64, 0.05), 0 8px 10px -6px rgba(8, 32, 64, 0.02);
+}
+
+.dark .glass-card {
+  background: rgba(10, 31, 58, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
+}
+
+.glass-orange {
+  background: rgba(248, 128, 0, 0.08);
+  border: 1px solid rgba(248, 128, 0, 0.2);
+}
+
+.dark .glass-orange {
+  background: rgba(248, 128, 0, 0.12);
+  border: 1px solid rgba(248, 128, 0, 0.3);
+}
+
+.glass-emerald {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.dark .glass-emerald {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+/* Custom glow effects */
+.glow-orange {
+  box-shadow: 0 0 25px -5px rgba(248, 128, 0, 0.35);
+}
+
+.glow-emerald {
+  box-shadow: 0 0 25px -5px rgba(16, 185, 129, 0.35);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+}

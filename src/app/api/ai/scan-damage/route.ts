@@ -7,16 +7,12 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { imageBase64, mimeType, notes, userId } = body;
 
-    let result;
-    if (imageBase64) {
-      result = await analyzeDamageWithGemini(
-        imageBase64,
-        mimeType || "image/jpeg",
-        notes
-      );
-    } else {
-      result = getFallbackDamageAnalysis(notes);
-    }
+    // Always call Gemini AI (with image if available, or with text description / symptom preset)
+    const result = await analyzeDamageWithGemini(
+      imageBase64 || null,
+      mimeType || "image/jpeg",
+      notes
+    );
 
     // Attempt to persist scan record to database if available
     try {

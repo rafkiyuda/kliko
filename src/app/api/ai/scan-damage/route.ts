@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { analyzeDamageWithGemini, getFallbackDamageAnalysis } from "@/lib/gemini";
+import { analyzeDamageWithGemini } from "@/lib/gemini";
 import { db } from "@/lib/db";
 
 export async function POST(req: NextRequest) {
@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { imageBase64, mimeType, notes, userId } = body;
 
-    // Always call Gemini AI (with image if available, or with text description / symptom preset)
+    // Call Gemini AI directly
     const result = await analyzeDamageWithGemini(
       imageBase64 || null,
       mimeType || "image/jpeg",
@@ -33,8 +33,7 @@ export async function POST(req: NextRequest) {
         },
       });
     } catch (dbErr) {
-      // Non-fatal if database is still syncing
-      console.warn("Could not persist AI scan log to DB (table might be pushing):", dbErr);
+      console.warn("Could not persist AI scan log to DB:", dbErr);
     }
 
     return NextResponse.json({
@@ -46,8 +45,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        error: error.message || "Failed to analyze damage",
-        data: getFallbackDamageAnalysis(),
+        error: error.message || "Gagal melakukan diagnosa kerusakan dengan Gemini AI.",
       },
       { status: 500 }
     );

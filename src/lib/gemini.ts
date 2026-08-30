@@ -32,11 +32,11 @@ export async function analyzeDamageWithGemini(
 
   const prompt = `
 Anda adalah konsultan teknis ahli konstruksi, renovasi, dan perbaikan rumah tangga dari platform "KLIKO" Indonesia.
-Analisis laporan/gambar kerusakan rumah berikut ini dan berikan diagnosa komprehensif dalam format JSON murni (tanpa backticks markdown atau penjelasan tambahan di luar JSON).
+Analisis laporan/gambar kerusakan rumah berikut ini dan berikan diagnosa komprehensif dalam format JSON murni (tanpa backticks markdown atau teks di luar JSON).
 
 Deskripsi / Gejala Kerusakan: "${userNotes || "Analisis kerusakan ini dan berikan estimasi biaya perbaikan standar tukang profesional di Indonesia"}"
 
-Format JSON yang wajib Anda kembalikan (pastikan valid JSON):
+Format JSON yang wajib Anda kembalikan:
 {
   "itemName": "Nama spesifik benda/bagian rumah (misal: Unit AC Split 1 PK, Wastafel Kamar Mandi, Dinding Plesteran, Atap Genteng & Talang, Pipa Air Bersih)",
   "damageTitle": "Judul singkat diagnosa kerusakan (misal: Talang Pembuangan Air AC Tersumbat & Freon Berkurang)",
@@ -62,6 +62,8 @@ Format JSON yang wajib Anda kembalikan (pastikan valid JSON):
   ]
 }
 `;
+
+  let lastError: any = null;
 
   // Try available models sequentially
   for (const modelName of modelNames) {
@@ -103,14 +105,19 @@ Format JSON yang wajib Anda kembalikan (pastikan valid JSON):
       }
 
       return parsed as DamageAnalysisResult;
-    } catch (modelErr) {
-      console.warn(`Model ${modelName} failed or unavailable, trying next model:`, modelErr);
+    } catch (modelErr: any) {
+      lastError = modelErr;
+      console.warn(`Model ${modelName} error:`, modelErr);
     }
   }
 
-  // Fallback if all API models fail
-  console.warn("Using intelligent offline fallback analysis for:", userNotes);
-  return getFallbackDamageAnalysis(userNotes);
+  // Throw transparent error if API fails
+  if (lastError) {
+    const errorMsg = lastError.message || lastError.toString();
+    throw new Error(`Google Gemini Error: ${errorMsg}`);
+  }
+
+  throw new Error("Gagal terhubung ke Google Gemini AI API.");
 }
 
 export function mapToKlikoCategory(text: string): string {
@@ -134,130 +141,4 @@ export function mapToKlikoCategory(text: string): string {
     return "Kelistrikan";
   }
   return "Elektronik & AC";
-}
-
-export function getFallbackDamageAnalysis(notes?: string): DamageAnalysisResult {
-  const lower = (notes || "").toLowerCase();
-  
-  if (lower.includes("ac") || lower.includes("dingin") || lower.includes("freon")) {
-    return {
-      itemName: "Unit Indoor AC Split (1 PK)",
-      damageTitle: "Talang Pembuangan Air AC Tersumbat & Freon Berkurang",
-      damageDescription: "Air menetes dari unit indoor akibat saluran pembuangan kondensasi tersumbat lumut dan filter udara kotor, menyebabkan pendinginan tidak optimal.",
-      severity: "Sedang",
-      estimatedMinPrice: 85000,
-      estimatedMaxPrice: 220000,
-      recommendedCategory: "Elektronik & AC",
-      recommendedService: "Service, Cuci & Reparasi AC Menetes / Tidak Dingin",
-      recommendedServicePrice: 85000,
-      recommendedMaterials: [
-        {
-          name: "Selang Pembuangan Fleksibel AC 2 Meter",
-          estimatedPrice: 35000,
-          isCircular: true,
-        },
-        {
-          name: "Freon R32 / R410A Refill",
-          estimatedPrice: 95000,
-          isCircular: false,
-        },
-      ],
-      urgencyAdvice: "Matikan unit AC sementara waktu dan letakkan kain atau wadah di bawah tetesan untuk mencegah kerusakan plafon atau lantai.",
-      suggestedSteps: [
-        "Pembersihan evaporator dan blower indoor dengan steam washer",
-        "Flushing pipa pembuangan air kondensasi hingga lancar",
-        "Pemeriksaan tekanan gas freon dan amper kompresor outdoor",
-      ],
-    };
-  }
-
-  if (lower.includes("dinding") || lower.includes("retak") || lower.includes("cat") || lower.includes("tembok")) {
-    return {
-      itemName: "Dinding Plesteran Interior",
-      damageTitle: "Retak Rambut Dinding & Pengelupasan Lapisan Cat",
-      damageDescription: "Terjadi penyusutan plesteran semen dan kelembaban rembesan air hujan yang menyebabkan lapisan cat menggelembung dan retak.",
-      severity: "Ringan",
-      estimatedMinPrice: 120000,
-      estimatedMaxPrice: 350000,
-      recommendedCategory: "Cat & Dinding",
-      recommendedService: "Pengecatan Dinding Rumah Interior & Eksterior",
-      recommendedServicePrice: 22000,
-      recommendedMaterials: [
-        {
-          name: "Plamir Mortar Semen Instan Anti-Retak (Surplus Sak)",
-          estimatedPrice: 45000,
-          isCircular: true,
-        },
-        {
-          name: "Cat Dasar Sealer Alkali Killer Dulux/Avian",
-          estimatedPrice: 85000,
-          isCircular: true,
-        },
-      ],
-      urgencyAdvice: "Hindari mengikis paksa retakan sebelum peralatan plamir dan sealer siap agar debu semen tidak menyebar ke furniture.",
-      suggestedSteps: [
-        "Pengikisan cat lama yang menggelembung dan pembersihan retakan",
-        "Aplikasi semen instan fleksibel pengisi retak rambut",
-        "Pelapisan cat dasar tahan alkali dan 2 lapis cat finishing merata",
-      ],
-    };
-  }
-
-  if (lower.includes("atap") || lower.includes("genteng") || lower.includes("talang") || lower.includes("kanopi")) {
-    return {
-      itemName: "Atap Genteng & Talang Rumah",
-      damageTitle: "Kebocoran Titik Sambungan Talang & Genteng Bergeser",
-      damageDescription: "Sambungan talang air seng mengalami korosi dan posisi beberapa genteng tanah liat bergeser akibat terpaan angin kencang sehingga air merembes ke plafon.",
-      severity: "Sedang",
-      estimatedMinPrice: 175000,
-      estimatedMaxPrice: 380000,
-      recommendedCategory: "Atap & Kanopi",
-      recommendedService: "Perbaikan Atap Genteng Bocor & Talang Air",
-      recommendedServicePrice: 175000,
-      recommendedMaterials: [
-        {
-          name: "Waterproofing Fiber Serat No Drop 1kg",
-          estimatedPrice: 65000,
-          isCircular: true,
-        },
-      ],
-      urgencyAdvice: "Tandai area plafon yang basah dengan pensil dan letakkan ember penampung air di bawahnya.",
-      suggestedSteps: [
-        "Pengembalian posisi genteng presisi",
-        "Pelapisan serat fiber waterproofing 3 lapis",
-        "Uji siram air untuk memastikan bebas bocor",
-      ],
-    };
-  }
-
-  // Default Wastafel / Plumbing
-  return {
-    itemName: "Wastafel Cuci Piring / Kamar Mandi",
-    damageTitle: "Kebocoran Pipa Siphon & Sumbatan Saluran Pembuangan",
-    damageDescription: "Sambungan pipa leher angsa (siphon trap) mengalami keausan gasket karet dan penumpukan endapan lemak sehingga air merembes ke bawah kabinet.",
-    severity: "Sedang",
-    estimatedMinPrice: 85000,
-    estimatedMaxPrice: 195000,
-    recommendedCategory: "Plumbing & Sanitari",
-    recommendedService: "Instalasi Plumbing & Pipa Air Bersih/Kotor",
-    recommendedServicePrice: 85000,
-    recommendedMaterials: [
-      {
-        name: "Set Siphon P-Trap Wastafel PVC Anti-Karat",
-        estimatedPrice: 55000,
-        isCircular: true,
-      },
-      {
-        name: "Seal Tape Karet Tebal & Klem Pipa",
-        estimatedPrice: 15000,
-        isCircular: false,
-      },
-    ],
-    urgencyAdvice: "Putar searah jarum jam stop kran di bawah wastafel untuk menghentikan aliran air sementara waktu dan letakkan baskom kecil.",
-    suggestedSteps: [
-      "Pelepasan pipa siphon lama dan pembersihan drat saluran utama",
-      "Pemasangan gasket karet baru dan penguncian mur ulir presisi",
-      "Uji alir air bertekanan selama 3 menit untuk memastikan nol kebocoran",
-    ],
-  };
 }

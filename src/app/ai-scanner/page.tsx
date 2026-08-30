@@ -6,63 +6,33 @@ import {
   Sparkles, 
   Camera, 
   Upload, 
-  AlertTriangle, 
+  Trash2, 
+  AlertCircle, 
   CheckCircle2, 
+  ArrowRight, 
   Hammer, 
   Recycle, 
-  ShieldCheck, 
-  ArrowRight, 
-  Loader2, 
+  ShieldAlert, 
   DollarSign, 
-  Trash2,
-  Image as ImageIcon
+  Loader2,
+  RefreshCw,
+  Clock
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { DamageAnalysisResult } from "@/lib/gemini";
-import { formatRupiah } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
-
-const DEMO_PRESETS = [
-  {
-    id: "wastafel",
-    label: "💧 Wastafel Bocor / Mampet",
-    category: "Plumbing",
-    notes: "Pipa pembuangan wastafel di bawah kabinet bocor dan air merembes keluar saat mencuci tangan.",
-  },
-  {
-    id: "ac",
-    label: "❄️ AC Menetes & Kurang Dingin",
-    category: "Elektronik & HVAC",
-    notes: "AC split 1 PK meneteskan air dari sisi kanan unit indoor dan hembusan angin terasa kurang dingin.",
-  },
-  {
-    id: "dinding",
-    label: "🏚️ Dinding Retak & Cat Mengelupas",
-    category: "Dinding & Finishing",
-    notes: "Dinding ruang tamu ada retak rambut dan cat lama menggelembung karena rembesan air.",
-  },
-  {
-    id: "atap",
-    label: "🌧️ Atap Genteng Bocor",
-    category: "Atap & Kanopi",
-    notes: "Atap rumah rembes saat hujan deras di area talang dan genteng ada yang bergeser.",
-  },
-];
+import { formatRupiah } from "@/lib/utils";
+import { DamageAnalysisResult } from "@/lib/gemini";
 
 export default function AiScannerPage() {
   const { user } = useAuth();
   const [selectedImage, setSelectedImage] = React.useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = React.useState<string | null>(null);
-  const [notes, setNotes] = React.useState<string>(DEMO_PRESETS[0].notes);
+  const [notes, setNotes] = React.useState<string>("");
   const [isAnalyzing, setIsAnalyzing] = React.useState<boolean>(false);
   const [result, setResult] = React.useState<DamageAnalysisResult | null>(null);
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-
-  const handleSelectPreset = (preset: typeof DEMO_PRESETS[0]) => {
-    setNotes(preset.notes);
-    setResult(null);
-  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -73,6 +43,7 @@ export default function AiScannerPage() {
         setSelectedImage(base64String);
         setPreviewUrl(reader.result as string);
         setResult(null);
+        setErrorMessage(null);
       };
       reader.readAsDataURL(file);
     }
@@ -88,23 +59,37 @@ export default function AiScannerPage() {
   };
 
   const handleRunAnalysis = async () => {
+    if (!selectedImage && (!notes || notes.trim().length === 0)) {
+      setErrorMessage("Silakan upload foto kerusakan atau tuliskan deskripsi gejala kerusakan terlebih dahulu.");
+      return;
+    }
+
     setIsAnalyzing(true);
+    setErrorMessage(null);
+    setResult(null);
+
     try {
       const res = await fetch("/api/ai/scan-damage", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           imageBase64: selectedImage,
-          notes: notes,
+          notes: notes.trim() || undefined,
           userId: user?.id,
         }),
       });
       const data = await res.json();
+      
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Gagal menganalisis kerusakan dengan AI Gemini.");
+      }
+
       if (data.data) {
         setResult(data.data);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error analyzing image:", err);
+      setErrorMessage(err.message || "Terjadi kesalahan saat memproses diagnosa AI.");
     } finally {
       setIsAnalyzing(false);
     }
@@ -117,36 +102,14 @@ export default function AiScannerPage() {
         <div className="text-center max-w-3xl mx-auto space-y-3">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-linear-to-r from-orange-500/15 via-amber-500/15 to-emerald-500/15 text-primary border border-orange-500/30 text-xs font-black shadow-xs">
             <Sparkles className="h-4 w-4 text-orange-500" />
-            <span>FITUR CERDAS: GOOGLE GEMINI AI VISION</span>
+            <span>GOOGLE GEMINI AI VISION & DAMAGE DETECTOR</span>
           </div>
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-foreground">
             AI Deteksi Kerusakan & Estimasi Biaya
           </h1>
           <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-            Foto barang rumah tangga atau bagian rumah yang rusak. Gemini AI akan langsung <strong>mendiagnosa kerusakan</strong>, menghitung <strong>estimasi biaya perbaikan fixed-price</strong>, dan mencarikan solusi tukang serta material sisa termurah.
+            Foto barang rumah tangga atau bagian rumah yang rusak. Gemini AI akan langsung <strong>mendiagnosa kerusakan</strong>, menghitung <strong>estimasi biaya perbaikan fixed-price</strong>, dan mencarikan solusi tukang serta material termurah.
           </p>
-        </div>
-
-        {/* Preset Quick Test Pills */}
-        <div className="space-y-2">
-          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block text-center">
-            Pilih Contoh Cepat untuk Simulasi Diagnosa:
-          </span>
-          <div className="flex flex-wrap items-center justify-center gap-2">
-            {DEMO_PRESETS.map((preset) => (
-              <button
-                key={preset.id}
-                onClick={() => handleSelectPreset(preset)}
-                className={`px-3.5 py-2 rounded-2xl text-xs font-bold border transition-all cursor-pointer ${
-                  notes === preset.notes
-                    ? "bg-primary text-white border-primary shadow-sm"
-                    : "bg-card text-foreground border-border hover:bg-muted"
-                }`}
-              >
-                {preset.label}
-              </button>
-            ))}
-          </div>
         </div>
 
         {/* Main Input & Scanner Layout */}
@@ -156,7 +119,7 @@ export default function AiScannerPage() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
-                  1. Foto Bagian yang Rusak (Opsional)
+                  1. Foto Bagian yang Rusak
                 </span>
                 {previewUrl && (
                   <button
@@ -169,7 +132,7 @@ export default function AiScannerPage() {
                 )}
               </div>
 
-              {/* Clean Upload Box - No bizarre fake default image */}
+              {/* Clean Upload Dropzone */}
               <div
                 onClick={() => fileInputRef.current?.click()}
                 className="relative rounded-2xl overflow-hidden border-2 border-dashed border-border hover:border-primary/60 transition-all cursor-pointer group bg-muted/30 p-6 flex flex-col items-center justify-center min-h-[220px] text-center"
@@ -221,25 +184,41 @@ export default function AiScannerPage() {
               </div>
             </div>
 
-            {/* User Notes Input */}
-            <div className="space-y-1.5">
+            {/* User Symptom Notes Input */}
+            <div className="space-y-2">
               <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
-                2. Gejala / Keluhan Tambahan
+                2. Gejala / Catatan Kerusakan
               </label>
               <textarea
                 rows={3}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Contoh: Air merembes keluar dari pipa bawah wastafel sejak kemarin..."
-                className="w-full p-3 rounded-xl border border-input bg-background text-xs sm:text-sm font-medium resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+                placeholder="Contoh: AC kamar tidur tidak dingin dan meneteskan air dari bagian indoor, atau pipa wastafel bocor pada sambungan leher angsa..."
+                className="w-full p-3.5 rounded-2xl border border-input bg-background text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary resize-none leading-relaxed"
               />
             </div>
 
-            {/* Scan Trigger Button */}
+            {/* Error Message Box */}
+            {errorMessage && (
+              <div className="p-4 rounded-2xl bg-destructive/10 border border-destructive/30 text-destructive text-xs space-y-1.5 animate-in fade-in-50">
+                <div className="flex items-center gap-2 font-bold text-sm">
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  <span>Gagal Memproses Diagnosa AI:</span>
+                </div>
+                <p className="leading-relaxed font-mono text-[11px] break-words bg-background/50 p-2.5 rounded-xl border border-destructive/20">
+                  {errorMessage}
+                </p>
+                <p className="text-[11px] text-muted-foreground pt-0.5">
+                  Pastikan variabel environment <strong>GEMINI_API_KEY</strong> terisi dengan benar di Vercel.
+                </p>
+              </div>
+            )}
+
+            {/* Action Button */}
             <Button
               onClick={handleRunAnalysis}
               disabled={isAnalyzing}
-              className="w-full h-13 rounded-2xl text-sm font-extrabold gap-2 bg-linear-to-r from-orange-500 via-amber-500 to-orange-600 hover:from-orange-600 hover:to-amber-600 text-white shadow-lg shadow-orange-500/25 cursor-pointer"
+              className="w-full py-6 rounded-2xl text-sm font-black gap-2 shadow-lg shadow-orange-500/25 bg-linear-to-r from-orange-500 via-amber-500 to-orange-600 hover:from-orange-600 hover:to-amber-600 text-white cursor-pointer"
             >
               {isAnalyzing ? (
                 <>
@@ -249,33 +228,18 @@ export default function AiScannerPage() {
               ) : (
                 <>
                   <Sparkles className="h-5 w-5" />
-                  <span>Mulai Analisis Kerusakan dengan Gemini AI</span>
-                  <ArrowRight className="h-5 w-5" />
+                  <span>Mulai Analisis Kerusakan</span>
                 </>
               )}
             </Button>
           </div>
 
-          {/* Right Column: AI Analysis Result Dashboard */}
-          <div className="lg:col-span-6 bg-card rounded-3xl p-6 sm:p-8 border border-border shadow-xl space-y-6 relative overflow-hidden">
-            {!result ? (
-              <div className="py-16 text-center space-y-4">
-                <div className="h-16 w-16 bg-orange-500/10 text-primary rounded-2xl flex items-center justify-center mx-auto ring-8 ring-orange-500/5">
-                  <Sparkles className="h-8 w-8" />
-                </div>
-                <div className="space-y-1">
-                  <h3 className="font-bold text-lg text-foreground">
-                    Menunggu Analisis AI
-                  </h3>
-                  <p className="text-xs text-muted-foreground max-w-sm mx-auto leading-relaxed">
-                    Pilih salah satu contoh kerusakan di atas atau upload foto Anda, lalu klik tombol <strong>"Mulai Analisis Kerusakan"</strong> untuk melihat diagnosa cerdas.
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-6 animate-in fade-in-50 duration-500">
-                {/* Result Header & Severity Badge */}
-                <div className="flex items-start justify-between gap-4 border-b border-border pb-4">
+          {/* Right Column: AI Analysis Result Display */}
+          <div className="lg:col-span-6">
+            {result ? (
+              <div className="bg-card rounded-3xl p-6 sm:p-8 border border-border shadow-md space-y-6 animate-in fade-in-50">
+                {/* Result Title & Severity */}
+                <div className="flex items-start justify-between gap-4 pb-4 border-b border-border">
                   <div>
                     <span className="text-[11px] font-bold text-primary uppercase tracking-wider block">
                       Hasil Diagnosa AI • {result.itemName}
@@ -351,49 +315,58 @@ export default function AiScannerPage() {
                       </span>
                       <Badge variant="eco" className="text-[9px]">Hemat 35%</Badge>
                     </div>
-
                     <div className="space-y-1.5">
                       {result.recommendedMaterials.map((mat, idx) => (
-                        <div key={idx} className="flex justify-between items-center text-xs text-foreground bg-background/80 p-2 rounded-xl border border-emerald-500/20">
-                          <span className="font-semibold">{mat.name}</span>
-                          <span className="font-black text-emerald-600 dark:text-emerald-400">
-                            {formatRupiah(mat.estimatedPrice)}
-                          </span>
+                        <div key={idx} className="flex justify-between items-center text-xs p-2 rounded-xl bg-background/60 border border-emerald-500/20">
+                          <span className="font-medium text-foreground">{mat.name}</span>
+                          <span className="font-bold text-emerald-600">{formatRupiah(mat.estimatedPrice)}</span>
                         </div>
                       ))}
                     </div>
                   </div>
                 )}
 
-                {/* Emergency Tips Advice */}
+                {/* Emergency Advice */}
                 {result.urgencyAdvice && (
-                  <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-2.5 text-xs text-amber-900 dark:text-amber-300">
-                    <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-amber-600" />
+                  <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-xs text-amber-900 dark:text-amber-200">
+                    <ShieldAlert className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
                     <div>
-                      <span className="font-bold block">Tips Darurat Pertolongan Pertama:</span>
-                      <p className="text-[11px] leading-relaxed mt-0.5 opacity-90">
-                        {result.urgencyAdvice}
-                      </p>
+                      <strong className="block font-bold">Langkah Darurat Saat Ini:</strong>
+                      <p className="mt-0.5 leading-relaxed">{result.urgencyAdvice}</p>
                     </div>
                   </div>
                 )}
 
-                {/* Step-by-step Technical Fix */}
+                {/* Technical Suggested Steps */}
                 {result.suggestedSteps?.length > 0 && (
-                  <div className="space-y-2 pt-2 border-t border-border">
-                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
-                      Rencana Teknis Perbaikan Tukang:
+                  <div className="space-y-2 text-xs">
+                    <span className="font-bold uppercase tracking-wider text-muted-foreground block">
+                      Rencana Kerja Teknis:
                     </span>
                     <div className="space-y-1.5">
                       {result.suggestedSteps.map((step, idx) => (
-                        <div key={idx} className="flex items-start gap-2 text-xs text-foreground">
-                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0 mt-0.5" />
-                          <span className="text-[11px] leading-tight">{step}</span>
+                        <div key={idx} className="flex items-start gap-2 text-muted-foreground">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+                          <span>{step}</span>
                         </div>
                       ))}
                     </div>
                   </div>
                 )}
+              </div>
+            ) : (
+              <div className="bg-card/50 rounded-3xl p-10 border-2 border-dashed border-border flex flex-col items-center justify-center text-center min-h-[420px] space-y-4">
+                <div className="h-16 w-16 rounded-3xl bg-muted flex items-center justify-center text-muted-foreground">
+                  <Sparkles className="h-8 w-8" />
+                </div>
+                <div className="space-y-1 max-w-sm">
+                  <h3 className="font-bold text-base text-foreground">
+                    Menunggu Foto & Diagnosa
+                  </h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Upload foto atau tuliskan deskripsi kerusakan di sebelah kiri, lalu tekan tombol <strong>Mulai Analisis Kerusakan</strong>.
+                  </p>
+                </div>
               </div>
             )}
           </div>
